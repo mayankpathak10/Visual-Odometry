@@ -1,0 +1,310 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Visual_Odometry</title><meta name="generator" content="MATLAB 9.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-04-02"><meta name="DC.source" content="Visual_Odometry.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% ENPM 673 Perception For Autonomous Robotics</span>
+<span class="comment">% PROJECT 2  - Spring 2018</span>
+<span class="comment">%</span>
+<span class="comment">% Question ( 100 points)- Visual Odometry</span>
+<span class="comment">%</span>
+<span class="comment">% To compare frames obtained from a dashboard camera and give the movement</span>
+<span class="comment">% of camera center in the form of line shown in a new image.</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">% Code By: Mayank Pathak</span>
+<span class="comment">%          115555037</span>
+<span class="comment">%</span>
+<span class="comment">% Dependencies: This code uses three functions,</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+
+<span class="comment">% Importing Images from the input folder</span>
+images = imageDatastore(<span class="string">'..\Inputs\stereo\centre\*.png'</span>);
+nfiles = size(images.Files,1);    <span class="comment">% Number of files found</span>
+
+<span class="comment">% Importing Camera Model and setting Camera Paramenters</span>
+[fx, fy, cx, cy, G_camera_image, LUT] = ReadCameraModel(<span class="string">'..\Inputs\stereo\centre'</span> ,<span class="string">'..\Inputs\model'</span>);
+K = [fx 0 cx;0 fy cy;0 0 1];        <span class="comment">% Variable to store Intrinsic Matrix</span>
+cameraParams = cameraParameters(<span class="string">'IntrinsicMatrix'</span>,K);
+
+<span class="comment">% Initialilzing Variables</span>
+cameraCenterPlot_In = [0,0];
+cameraCenterPlot_my = [0,0];
+R_In = eye(3);
+T_In = zeros(1,3);
+
+R_my = eye(3);
+T_my = zeros(1,3);
+
+figure;
+Start_Frame = 1;
+
+<span class="comment">% Video Writer Object</span>
+Out_Video = VideoWriter(<span class="string">'..\Output\Project2_Video.avi'</span>);
+Out_Video.FrameRate = 100;
+open(Out_Video);
+
+<span class="comment">%  Loop to iterate through frames and apply operations</span>
+<span class="keyword">for</span> k = Start_Frame:1: 20 <span class="comment">% (nfiles-1)</span>
+
+<span class="comment">% To read pair of images from the directory</span>
+Image1 = readimage(images,k);
+Image2 = readimage(images,k+1);
+
+<span class="comment">% Demosaic to obtain color images from the Bayer Encoded Image</span>
+Image1=demosaic(Image1,<span class="string">'gbrg'</span>);
+Image2=demosaic(Image2,<span class="string">'gbrg'</span>);
+
+<span class="comment">% Undistorting the Images using the given UndistortImage function</span>
+Undistorted_Image1 = UndistortImage(Image1, LUT);
+Undistorted_Image2 = UndistortImage(Image2, LUT);
+
+<span class="comment">% Convert the images to gray scale for detecting features</span>
+First = rgb2gray(Undistorted_Image1);
+Second = rgb2gray(Undistorted_Image2);
+
+<span class="comment">% detecting SURF features on both the images</span>
+Image1_points = detectSURFFeatures(First);
+Image2_points = detectSURFFeatures(Second);
+
+<span class="comment">% extract features from images</span>
+[features1,vpoints_1] = extractFeatures(First,Image1_points);
+[features2,vpoints_2] = extractFeatures(Second,Image2_points);
+
+<span class="comment">% Matching the extracted features</span>
+indexPairs = matchFeatures(features1,features2) ;
+matchedPoints1 = vpoints_1(indexPairs(:,1));
+matchedPoints2 = vpoints_2(indexPairs(:,2));
+
+<span class="comment">% A condition to implement search only if more than eight matching points</span>
+<span class="comment">% are found</span>
+<span class="keyword">if</span> size(matchedPoints1.Location,1)&lt;8
+
+<span class="keyword">else</span>
+<span class="comment">%   Function to calculate Fundamental Matrix Using RANSAC</span>
+    [Fmatrix, inliers_a, inliers_b] = RANSACfundamental_matrix(matchedPoints1.Location,matchedPoints2.Location);
+
+<span class="comment">%   In-Built Function to obtain Fundamental Matrix</span>
+    F_matlab = estimateFundamentalMatrix(matchedPoints1,matchedPoints2);
+    [FU, FD, FV] = svd(F_matlab);
+    FD(3,3)=0;
+    F = FU*FD*FV';
+
+<span class="comment">%  Function to Calculate Essential</span>
+   [R_In,T_In] = Essential_Matrix(F,K,R_In,T_In);
+   [R_my,T_my] = Essential_Matrix(Fmatrix,K,R_my,T_my);
+
+   cameraCenterPlot_In(k,:)=[T_In(1,1) T_In(1,3)];
+   cameraCenterPlot_my(k,:)=[T_my(1,1) T_my(1,3)];
+
+<span class="comment">%  Section to Plot results on the figure</span>
+ drawnow
+ plot(cameraCenterPlot_In(:,1),cameraCenterPlot_In(:,2),cameraCenterPlot_my(:,1),cameraCenterPlot_my(:,2),<span class="string">'LineWidth'</span>,2);
+    lowestx = min(T_In(1,1),T_my(1,1));
+    lowesty = min(T_In(1,3),T_my(1,3));
+    maximumx = max(T_In(1,1),T_my(1,1));
+    maximumy = max(T_In(1,3),T_my(1,3));
+    axis([min(-200,lowestx) max(1500,maximumx) min(-300,lowesty) max(1500,maximumy)]);
+    legend(<span class="string">'Inbult'</span>,<span class="string">'My'</span>,<span class="string">'Location'</span>,<span class="string">'northwest'</span>);
+    title([<span class="string">'Frame '</span>,num2str(Start_Frame),<span class="string">' to '</span>,num2str(k+1)]);
+<span class="comment">%     frame = getframe;</span>
+<span class="comment">%     img = frame2im(frame);</span>
+<span class="comment">%     writeVideo(Out_Video,img);</span>
+<span class="keyword">end</span>
+<span class="keyword">end</span>
+
+close(Out_Video);
+</pre><pre class="codeoutput">..\Inputs\model/stereo_narrow_left.txt
+Warning: No video frames were written to this file. The file may be invalid. 
+</pre><img vspace="5" hspace="5" src="Visual_Odometry_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ENPM 673 Perception For Autonomous Robotics
+% PROJECT 2  - Spring 2018
+%
+% Question ( 100 points)- Visual Odometry 
+%
+% To compare frames obtained from a dashboard camera and give the movement
+% of camera center in the form of line shown in a new image.
+%
+% 
+% 
+% Code By: Mayank Pathak
+%          115555037
+%
+% Dependencies: This code uses three functions,
+%               
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Importing Images from the input folder
+images = imageDatastore('..\Inputs\stereo\centre\*.png');  
+nfiles = size(images.Files,1);    % Number of files found
+
+% Importing Camera Model and setting Camera Paramenters
+[fx, fy, cx, cy, G_camera_image, LUT] = ReadCameraModel('..\Inputs\stereo\centre' ,'..\Inputs\model'); 
+K = [fx 0 cx;0 fy cy;0 0 1];        % Variable to store Intrinsic Matrix
+cameraParams = cameraParameters('IntrinsicMatrix',K);  
+
+% Initialilzing Variables
+cameraCenterPlot_In = [0,0];
+cameraCenterPlot_my = [0,0];
+R_In = eye(3);
+T_In = zeros(1,3);
+  
+R_my = eye(3);
+T_my = zeros(1,3);
+
+figure;
+Start_Frame = 1;
+
+% Video Writer Object
+Out_Video = VideoWriter('..\Output\Project2_Video.avi');
+Out_Video.FrameRate = 100;
+open(Out_Video);
+
+%  Loop to iterate through frames and apply operations
+for k = Start_Frame:1: 20 % (nfiles-1)
+
+% To read pair of images from the directory
+Image1 = readimage(images,k);
+Image2 = readimage(images,k+1);
+
+% Demosaic to obtain color images from the Bayer Encoded Image
+Image1=demosaic(Image1,'gbrg');
+Image2=demosaic(Image2,'gbrg');
+    
+% Undistorting the Images using the given UndistortImage function
+Undistorted_Image1 = UndistortImage(Image1, LUT);
+Undistorted_Image2 = UndistortImage(Image2, LUT);
+
+% Convert the images to gray scale for detecting features
+First = rgb2gray(Undistorted_Image1);
+Second = rgb2gray(Undistorted_Image2);
+
+% detecting SURF features on both the images
+Image1_points = detectSURFFeatures(First);
+Image2_points = detectSURFFeatures(Second);
+
+% extract features from images
+[features1,vpoints_1] = extractFeatures(First,Image1_points);
+[features2,vpoints_2] = extractFeatures(Second,Image2_points);
+
+% Matching the extracted features
+indexPairs = matchFeatures(features1,features2) ;
+matchedPoints1 = vpoints_1(indexPairs(:,1));
+matchedPoints2 = vpoints_2(indexPairs(:,2));
+    
+% A condition to implement search only if more than eight matching points 
+% are found
+if size(matchedPoints1.Location,1)<8
+
+else
+%   Function to calculate Fundamental Matrix Using RANSAC
+    [Fmatrix, inliers_a, inliers_b] = RANSACfundamental_matrix(matchedPoints1.Location,matchedPoints2.Location);
+    
+%   In-Built Function to obtain Fundamental Matrix 
+    F_matlab = estimateFundamentalMatrix(matchedPoints1,matchedPoints2);
+    [FU, FD, FV] = svd(F_matlab);
+    FD(3,3)=0;
+    F = FU*FD*FV';  
+    
+%  Function to Calculate Essential
+   [R_In,T_In] = Essential_Matrix(F,K,R_In,T_In);
+   [R_my,T_my] = Essential_Matrix(Fmatrix,K,R_my,T_my);
+   
+   cameraCenterPlot_In(k,:)=[T_In(1,1) T_In(1,3)];
+   cameraCenterPlot_my(k,:)=[T_my(1,1) T_my(1,3)];
+ 
+%  Section to Plot results on the figure
+ drawnow
+ plot(cameraCenterPlot_In(:,1),cameraCenterPlot_In(:,2),cameraCenterPlot_my(:,1),cameraCenterPlot_my(:,2),'LineWidth',2);
+    lowestx = min(T_In(1,1),T_my(1,1));
+    lowesty = min(T_In(1,3),T_my(1,3));
+    maximumx = max(T_In(1,1),T_my(1,1));
+    maximumy = max(T_In(1,3),T_my(1,3));
+    axis([min(-200,lowestx) max(1500,maximumx) min(-300,lowesty) max(1500,maximumy)]);
+    legend('Inbult','My','Location','northwest');
+    title(['Frame ',num2str(Start_Frame),' to ',num2str(k+1)]);
+%     frame = getframe;
+%     img = frame2im(frame);
+%     writeVideo(Out_Video,img);
+end
+end
+
+close(Out_Video);
+
+
+##### SOURCE END #####
+--></body></html>
